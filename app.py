@@ -40,13 +40,60 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# --- ZONE 1 : FORMULAIRE DE SAISIE (Dans la barre latérale gauche) ---
+# --- ZONE 1 : CHOIX DU MODE D'ENTRÉE ---
 st.sidebar.header("📥 Paramètres des Capteurs (Entrées IA)")
 
-val_humidite = st.sidebar.slider("Humidité (%)", min_value=0.0, max_value=100.0, value=45.5, step=0.1)
-val_temperature = st.sidebar.slider("Température (°C)", min_value=-10.0, max_value=50.0, value=24.2, step=0.1)
-val_co2 = st.sidebar.number_input("Concentration CO2 (ppm)", min_value=0, max_value=5000, value=450)
-val_o2 = st.sidebar.slider("Concentration O2 (%vol)", min_value=0.0, max_value=25.0, value=20.9, step=0.1)
+# Sélecteur de mode
+mode = st.sidebar.radio(
+    "Choisir le mode de saisie:",
+    ("Mode Slider", "Mode Formulaire"),
+    horizontal=False
+)
+
+# --- MODE SLIDER (Existant) ---
+if mode == "Mode Slider":
+    val_humidite = st.sidebar.slider("Humidité (%)", min_value=0.0, max_value=100.0, value=45.5, step=0.1)
+    val_temperature = st.sidebar.slider("Température (°C)", min_value=-10.0, max_value=50.0, value=24.2, step=0.1)
+    val_co2 = st.sidebar.number_input("Concentration CO2 (ppm)", min_value=0, max_value=5000, value=450)
+    val_o2 = st.sidebar.slider("Concentration O2 (%vol)", min_value=0.0, max_value=25.0, value=20.9, step=0.1)
+
+# --- MODE FORMULAIRE (Nouveau) ---
+else:
+    st.sidebar.markdown("### 📋 Formulaire de Saisie")
+    
+    col_form1, col_form2 = st.sidebar.columns(2)
+    
+    with col_form1:
+        val_humidite = st.number_input(
+            "Humidité (%)",
+            min_value=0.0,
+            max_value=100.0,
+            value=45.5,
+            step=0.1
+        )
+        val_temperature = st.number_input(
+            "Température (°C)",
+            min_value=-10.0,
+            max_value=50.0,
+            value=24.2,
+            step=0.1
+        )
+    
+    with col_form2:
+        val_co2 = st.number_input(
+            "CO2 (ppm)",
+            min_value=0,
+            max_value=5000,
+            value=450,
+            step=1
+        )
+        val_o2 = st.number_input(
+            "O2 (%vol)",
+            min_value=0.0,
+            max_value=25.0,
+            value=20.9,
+            step=0.1
+        )
 
 st.sidebar.markdown("---")
 btn_analyser = st.sidebar.button("🚀 Lancer l'Analyse IA", use_container_width=True)
