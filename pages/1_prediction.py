@@ -152,37 +152,6 @@ with col4:
 st.markdown("<br><hr>", unsafe_allow_html=True)
 
 # Section graphiques
-st.subheader("📈 Visualisations")
-
-col_viz1, col_viz2 = st.columns([2, 1], gap="medium")
-
-with col_viz1:
-    st.markdown("""
-        <div class="card">
-            <h4 style="color: #3b82f6; margin: 0 0 15px 0;">📊 Activité Temporelle</h4>
-    """, unsafe_allow_html=True)
-    
-    historique_valeurs = [random.randint(20, 45) for _ in range(15)]
-    st.area_chart(historique_valeurs, use_container_width=True)
-    
-    st.markdown("</div>", unsafe_allow_html=True)
-
-with col_viz2:
-    st.markdown("""
-        <div class="card">
-            <h4 style="color: #3b82f6; margin: 0 0 15px 0;">🍩 Composition</h4>
-    """, unsafe_allow_html=True)
-    
-    donnies_gaz = {
-        "O2": val_o2,
-        "Humidité": val_humidite
-    }
-    st.bar_chart(donnies_gaz, use_container_width=True)
-    
-    st.markdown("</div>", unsafe_allow_html=True)
-
-st.markdown("<br>", unsafe_allow_html=True)
-
 # Section informations détaillées
 st.subheader("ℹ️ Message d'Alerte Détaillé")
 
