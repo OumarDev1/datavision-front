@@ -178,6 +178,28 @@ def render_alert_box(status: str, title: str, subtitle: str, message: str):
         </div>
     """, unsafe_allow_html=True)
 
+def render_warning_alert(title: str, message: str, action: str):
+    st.markdown(f"""
+        <div style="background: linear-gradient(135deg, #7c2d12 0%, #92400e 100%); 
+                    padding: 28px; border-radius: 14px; border-left: 6px solid #f59e0b; 
+                    box-shadow: 0 10px 22px rgba(249, 115, 22, 0.18);">
+            <h3 style="color: #f59e0b; margin: 0 0 12px 0;">{title}</h3>
+            <p style="color: #fde68a; margin: 0 0 10px 0; font-size: 15px;">{message}</p>
+            <p style="color: #f8d5a3; margin: 0; font-size: 14px; font-weight: 600;">Action recommandée : {action}</p>
+        </div>
+    """, unsafe_allow_html=True)
+
+def render_critical_alert(title: str, message: str, action: str):
+    st.markdown(f"""
+        <div style="background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%); 
+                    padding: 28px; border-radius: 14px; border-left: 6px solid #ef4444; 
+                    box-shadow: 0 10px 22px rgba(239, 68, 68, 0.30);">
+            <h3 style="color: #fca5a5; margin: 0 0 12px 0;">{title}</h3>
+            <p style="color: #fee2e2; margin: 0 0 10px 0; font-size: 15px;">{message}</p>
+            <p style="color: #fee2e2; margin: 0; font-size: 14px; font-weight: 700;">Action urgente : {action}</p>
+        </div>
+    """, unsafe_allow_html=True)
+
 def render_card(title: str, content: str):
     """Affiche une carte personnalisée"""
     st.markdown(f"""

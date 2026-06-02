@@ -3,10 +3,11 @@ import requests
 import random
 import pandas as pd
 from datetime import datetime, timedelta
-from utils import apply_global_styles, render_header, render_alert_box, render_footer
+from utils import apply_global_styles, render_header, render_alert_box, render_warning_alert, render_critical_alert, render_footer
 
 # Configuration
-st.set_page_config(page_title="Prédictions - DataVision", layout="wide")
+if __name__ == "__main__":
+    st.set_page_config(page_title="Prédictions - DataVision", layout="wide")
 apply_global_styles()
 
 # Header
@@ -101,9 +102,17 @@ st.subheader("📊 Résultats de l'Analyse")
 if statut_ia == "Optimal":
     render_alert_box("optimal", "✅ STATUT OPTIMAL", "Classe", score_ia)
 elif statut_ia == "Avertissement":
-    render_alert_box("warning", "⚠️ AVERTISSEMENT", "Classe", score_ia)
+    render_warning_alert(
+        "⚠️ AVERTISSEMENT",
+        f"{alerte_txt}",
+        "Surveillez la situation et ajustez les paramètres si nécessaire"
+    )
 elif statut_ia == "Critique":
-    render_alert_box("critical", "🚨 CRITIQUE", "Classe", score_ia)
+    render_critical_alert(
+        "🚨 CRITIQUE",
+        f"{alerte_txt}",
+        "Intervention immédiate requise : vérifiez la source du problème"
+    )
 else:
     render_alert_box("info", "🕒 EN ATTENTE", "Statut", "Lancez une analyse pour voir les résultats")
 

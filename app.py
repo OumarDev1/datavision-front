@@ -1,3 +1,7 @@
+import importlib.util
+import os
+import sys
+
 import streamlit as st
 from utils import apply_global_styles, render_header, render_card, render_footer
 
@@ -22,6 +26,37 @@ st.sidebar.markdown("""
         <p style="color: #94a3b8; margin: 5px 0 0 0; font-size: 12px;">Plateforme de Prédiction</p>
     </div>
 """, unsafe_allow_html=True)
+
+page_choice = st.sidebar.selectbox(
+    "📍 Aller à :",
+    [
+        "🏠 Dashboard",
+        "🔮 Prédictions",
+        "📊 Historique",
+        "⚙️ Configuration",
+        "📚 Documentation"
+    ],
+    index=0
+)
+
+page_mapping = {
+    "🔮 Prédictions": os.path.join("pages", "1_prediction.py"),
+    "📊 Historique": os.path.join("pages", "2_historique.py"),
+    "⚙️ Configuration": os.path.join("pages", "3_configuration.py"),
+    "📚 Documentation": os.path.join("pages", "4_documentation.py")
+}
+
+
+def run_page(path):
+    module_name = f"page_{os.path.splitext(os.path.basename(path))[0]}"
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+
+if page_choice != "🏠 Dashboard":
+    run_page(page_mapping[page_choice])
+    st.stop()
 
 # Afficher le header principal
 render_header("🌐 DataVision AI Platform", "Tableau de bord principal • Analyse environnementale en temps réel")

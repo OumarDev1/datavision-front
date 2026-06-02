@@ -5,7 +5,8 @@ from datetime import datetime, timedelta
 from utils import apply_global_styles, render_header, render_card, render_footer
 
 # Configuration
-st.set_page_config(page_title="Historique - DataVision", layout="wide")
+if __name__ == "__main__":
+    st.set_page_config(page_title="Historique - DataVision", layout="wide")
 apply_global_styles()
 
 # Header
