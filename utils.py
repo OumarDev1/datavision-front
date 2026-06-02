@@ -180,54 +180,78 @@ def render_alert_box(status: str, title: str, subtitle: str, message: str):
 
 def play_warning_sound():
     """Joue un son d'avertissement (bip moyen)"""
-    st.markdown("""
-        <audio autoplay>
-            <source src="data:audio/wav;base64,UklGRiYAAABXQVZFZm10IBAAAAABAAEAQB8AAAB9AAACABAAZGF0YQIAAAAAAA==" type="audio/wav">
-        </audio>
+    st.write("""
         <script>
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = audioContext.createOscillator();
-            const gainNode = audioContext.createGain();
-            
-            oscillator.connect(gainNode);
-            gainNode.connect(audioContext.destination);
-            
-            oscillator.frequency.value = 800; // Fréquence moyenne pour l'avertissement
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
-            
-            oscillator.start(audioContext.currentTime);
-            oscillator.stop(audioContext.currentTime + 0.3);
+        (function() {
+            try {
+                const playSound = () => {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    const audioContext = new AudioContext();
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.frequency.value = 800;
+                    oscillator.type = 'sine';
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                    
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 0.3);
+                };
+                
+                playSound();
+                document.addEventListener('click', playSound, { once: true });
+            } catch(e) {
+                console.log('Erreur audio:', e);
+            }
+        })();
         </script>
     """, unsafe_allow_html=True)
 
 def play_critical_sound():
     """Joue un son critique (bip insistant haut)"""
-    st.markdown("""
+    st.write("""
         <script>
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            
-            // Premier bip
-            const osc1 = audioContext.createOscillator();
-            const gain1 = audioContext.createGain();
-            osc1.connect(gain1);
-            gain1.connect(audioContext.destination);
-            osc1.frequency.value = 1200;
-            gain1.gain.setValueAtTime(0.4, audioContext.currentTime);
-            gain1.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.25);
-            osc1.start(audioContext.currentTime);
-            osc1.stop(audioContext.currentTime + 0.25);
-            
-            // Deuxième bip
-            const osc2 = audioContext.createOscillator();
-            const gain2 = audioContext.createGain();
-            osc2.connect(gain2);
-            gain2.connect(audioContext.destination);
-            osc2.frequency.value = 1200;
-            gain2.gain.setValueAtTime(0.4, audioContext.currentTime + 0.35);
-            gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6);
-            osc2.start(audioContext.currentTime + 0.35);
-            osc2.stop(audioContext.currentTime + 0.6);
+        (function() {
+            try {
+                const playSound = () => {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    const audioContext = new AudioContext();
+                    
+                    // Premier bip
+                    const osc1 = audioContext.createOscillator();
+                    const gain1 = audioContext.createGain();
+                    osc1.connect(gain1);
+                    gain1.connect(audioContext.destination);
+                    osc1.frequency.value = 1200;
+                    osc1.type = 'sine';
+                    gain1.gain.setValueAtTime(0.4, audioContext.currentTime);
+                    gain1.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.25);
+                    osc1.start(audioContext.currentTime);
+                    osc1.stop(audioContext.currentTime + 0.25);
+                    
+                    // Deuxième bip
+                    const osc2 = audioContext.createOscillator();
+                    const gain2 = audioContext.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(audioContext.destination);
+                    osc2.frequency.value = 1200;
+                    osc2.type = 'sine';
+                    gain2.gain.setValueAtTime(0.4, audioContext.currentTime + 0.35);
+                    gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.6);
+                    osc2.start(audioContext.currentTime + 0.35);
+                    osc2.stop(audioContext.currentTime + 0.6);
+                };
+                
+                playSound();
+                document.addEventListener('click', playSound, { once: true });
+            } catch(e) {
+                console.log('Erreur audio:', e);
+            }
+        })();
         </script>
     """, unsafe_allow_html=True)
 
