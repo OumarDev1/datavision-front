@@ -51,6 +51,8 @@ page_mapping = {
 
 
 def navigate_to(page_name: str):
+    if "page_choice" not in st.session_state:
+        st.session_state.page_choice = "🏠 Dashboard"
     st.session_state.page_choice = page_name
     st.experimental_rerun()
 
@@ -92,24 +94,21 @@ with col_pred:
         "🔮 Prédictions",
         "Saisissez vos paramètres et obtenez une prédiction instantanée pour humidité, température, CO2 et O2."
     )
-    if st.button("Ouvrir", key="go_predict"):
-        navigate_to("🔮 Prédictions")
+    st.button("Ouvrir", key="go_predict", on_click=navigate_to, args=("🔮 Prédictions",))
 
 with col_hist:
     render_card(
         "📊 Historique",
         "Visualisez vos analyses précédentes et suivez l’évolution de votre environnement."
     )
-    if st.button("Ouvrir", key="go_history"):
-        navigate_to("📊 Historique")
+    st.button("Ouvrir", key="go_history", on_click=navigate_to, args=("📊 Historique",))
 
 with col_conf:
     render_card(
         "⚙️ Configuration",
         "Ajustez les seuils d’alerte, notifications et préférences de la plateforme."
     )
-    if st.button("Ouvrir", key="go_settings"):
-        navigate_to("⚙️ Configuration")
+    st.button("Ouvrir", key="go_settings", on_click=navigate_to, args=("⚙️ Configuration",))
 
 st.markdown("<br>", unsafe_allow_html=True)
 
