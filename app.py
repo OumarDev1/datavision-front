@@ -27,6 +27,9 @@ st.sidebar.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
+if "page_choice" not in st.session_state:
+    st.session_state.page_choice = "🏠 Dashboard"
+
 page_choice = st.sidebar.selectbox(
     "📍 Aller à :",
     [
@@ -36,7 +39,7 @@ page_choice = st.sidebar.selectbox(
         "⚙️ Configuration",
         "📚 Documentation"
     ],
-    index=0
+    key="page_choice"
 )
 
 page_mapping = {
@@ -45,6 +48,11 @@ page_mapping = {
     "⚙️ Configuration": os.path.join("pages", "3_configuration.py"),
     "📚 Documentation": os.path.join("pages", "4_documentation.py")
 }
+
+
+def navigate_to(page_name: str):
+    st.session_state.page_choice = page_name
+    st.experimental_rerun()
 
 
 def run_page(path):
@@ -58,146 +66,72 @@ if page_choice != "🏠 Dashboard":
     run_page(page_mapping[page_choice])
     st.stop()
 
-# Afficher le header principal
-render_header("🌐 DataVision AI Platform", "Tableau de bord principal • Analyse environnementale en temps réel")
+# --- Page d'accueil simple ---
+render_header("🌐 DataVision AI", "Un point d’entrée clair pour vos analyses environnementales")
 
-# --- CONTENU PRINCIPAL ---
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    st.metric(
-        label="📊 Prédictions Total",
-        value="1,234",
-        delta="↑ 52 cette semaine"
-    )
-
-with col2:
-    st.metric(
-        label="✅ Taux de Précision",
-        value="94.3%",
-        delta="↑ +2.1%"
-    )
-
-with col3:
-    st.metric(
-        label="⚡ Modèles Actifs",
-        value="5",
-        delta="Tous opérationnels"
-    )
+st.markdown(
+    """
+    <div style='background: rgba(59, 130, 246, 0.1); padding: 24px; border-radius: 18px;'>
+        <h2 style='color: #e2e8f0; margin: 0 0 10px 0;'>Bienvenue sur DataVision</h2>
+        <p style='color: #cbd5e1; margin: 0; font-size: 15px; line-height: 1.7;'>
+            Une interface claire et accessible pour prédire l'état de l’environnement, suivre l'historique de vos analyses et ajuster vos paramètres.
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# --- SECTION FEATURES ---
-st.subheader("🚀 Fonctionnalités Principales")
+st.markdown("### Accès rapide")
 
-col_f1, col_f2, col_f3 = st.columns(3)
+col_pred, col_hist, col_conf = st.columns(3, gap="large")
 
-with col_f1:
+with col_pred:
     render_card(
         "🔮 Prédictions",
-        "Analysez les paramètres environnementaux avec deux modes de saisie : Slider et Formulaire. Obtenez des prédictions en temps réel."
+        "Saisissez vos paramètres et obtenez une prédiction instantanée pour humidité, température, CO2 et O2."
     )
+    if st.button("Ouvrir", key="go_predict"):
+        navigate_to("🔮 Prédictions")
 
-with col_f2:
+with col_hist:
     render_card(
         "📊 Historique",
-        "Consultez l'historique complet de vos analyses. Suivez les tendances et les patterns au fil du temps."
+        "Visualisez vos analyses précédentes et suivez l’évolution de votre environnement."
     )
+    if st.button("Ouvrir", key="go_history"):
+        navigate_to("📊 Historique")
 
-with col_f3:
+with col_conf:
     render_card(
         "⚙️ Configuration",
-        "Personnalisez les paramètres de la plateforme, gérez les seuils d'alerte et configurez vos préférences."
+        "Ajustez les seuils d’alerte, notifications et préférences de la plateforme."
     )
+    if st.button("Ouvrir", key="go_settings"):
+        navigate_to("⚙️ Configuration")
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# --- SECTION STATISTIQUES ---
-st.subheader("📈 Statistiques Globales")
+st.subheader("Pourquoi utiliser DataVision ?")
 
-col_stats1, col_stats2, col_stats3 = st.columns(3)
-
-with col_stats1:
-    st.markdown("""
-        <div class="card">
-            <h4 style="color: #3b82f6; margin: 0;">📌 Paramètres Analysés</h4>
-            <p style="color: #64748b; font-size: 24px; font-weight: bold; margin: 15px 0;">4</p>
-            <p style="color: #94a3b8; margin: 0; font-size: 12px;">Humidité • Température • CO2 • O2</p>
-        </div>
-    """, unsafe_allow_html=True)
-
-with col_stats2:
-    st.markdown("""
-        <div class="card">
-            <h4 style="color: #f59e0b; margin: 0;">🤖 Modèle IA</h4>
-            <p style="color: #64748b; font-size: 24px; font-weight: bold; margin: 15px 0;">Random Forest</p>
-            <p style="color: #94a3b8; margin: 0; font-size: 12px;">Algorithme de classification avancé</p>
-        </div>
-    """, unsafe_allow_html=True)
-
-with col_stats3:
-    st.markdown("""
-        <div class="card">
-            <h4 style="color: #10b981; margin: 0;">🔌 API Status</h4>
-            <p style="color: #64748b; font-size: 24px; font-weight: bold; margin: 15px 0;">Active</p>
-            <p style="color: #94a3b8; margin: 0; font-size: 12px;">Connecté au serveur Render</p>
-        </div>
-    """, unsafe_allow_html=True)
+st.markdown(
+    """
+    <div class='card'>
+        <ul style='color: #cbd5e1; margin: 0 0 0 18px; line-height: 1.8;'>
+            <li>Interface simple et lisible, sans surcharge d’information.</li>
+            <li>Navigation claire entre l’accueil, les prédictions, l’historique et les paramètres.</li>
+            <li>Alertes visuelles et sonores pour réagir rapidement aux situations critiques.</li>
+        </ul>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# --- GUIDE RAPIDE ---
-st.subheader("📖 Guide de Démarrage Rapide")
+st.info(
+    "Pour démarrer, cliquez sur l’une des cartes ci-dessus ou utilisez le menu latéral."
+)
 
-with st.expander("ℹ️ Comment utiliser la plateforme ?"):
-    st.markdown("""
-    ### Étapes simples pour commencer :
-    
-    1. **🔮 Prédictions** : Accédez à la page de prédiction via le menu latéral
-    2. **⚙️ Configurez** : Choisissez entre le mode Slider ou Formulaire
-    3. **📊 Analysez** : Entrez vos paramètres et cliquez sur "Lancer l'Analyse"
-    4. **📈 Consultez** : Explorez votre historique et les tendances
-    
-    ### Mode Slider
-    - Interface intuitive avec des curseurs
-    - Idéal pour les ajustements rapides
-    - Visualisation en temps réel des changements
-    
-    ### Mode Formulaire
-    - Saisie précise des valeurs
-    - Meilleur pour les analyses détaillées
-    - Entrée par champs numériques
-    """)
-
-with st.expander("⚠️ Comprendre les statuts"):
-    st.markdown("""
-    | Statut | Signification | Action |
-    |--------|---------------|--------|
-    | ✅ **Optimal** | Conditions parfaites | Aucune action requise |
-    | ⚠️ **Avertissement** | Conditions à surveiller | Surveillance recommandée |
-    | 🚨 **Critique** | Conditions dangereuses | Action immédiate requise |
-    """)
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-# --- RECENT INSIGHTS ---
-st.subheader("💡 Insights Récents")
-
-col_insight1, col_insight2 = st.columns(2)
-
-with col_insight1:
-    st.info("""
-    **📊 Tendance Humidité** : Les niveaux d'humidité sont restés stables 
-    cette semaine avec une moyenne de 45.3%. Conditions optimales maintenues.
-    """)
-
-with col_insight2:
-    st.warning("""
-    **🌡️ Alerte Température** : La température a augmenté de 2.5°C cette semaine. 
-    Recommandation : augmenter la ventilation.
-    """)
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-# Footer
 render_footer()
