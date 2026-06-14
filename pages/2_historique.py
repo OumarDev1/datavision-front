@@ -97,21 +97,93 @@ st.markdown("<br>", unsafe_allow_html=True)
 # --- TABLEAU HISTORIQUE ---
 st.subheader("📋 Détail des Prédictions")
 
-# Coloriser le tableau
-def color_statut(val):
-    if val == "Optimal":
-        return "background-color: rgba(16, 185, 129, 0.2); color: #10b981;"
-    elif val == "Avertissement":
-        return "background-color: rgba(245, 158, 11, 0.2); color: #f59e0b;"
-    elif val == "Critique":
-        return "background-color: rgba(239, 68, 68, 0.2); color: #ef4444;"
-    return ""
+status_styles = {
+    "Optimal": "background-color: rgba(16, 185, 129, 0.14); color: #10b981;",
+    "Avertissement": "background-color: rgba(245, 158, 11, 0.14); color: #f59e0b;",
+    "Critique": "background-color: rgba(239, 68, 68, 0.16); color: #ef4444;"
+}
 
-styled_df = df_filtree.style.applymap(
-    lambda x: color_statut(x) if isinstance(x, str) and x in ["Optimal", "Avertissement", "Critique"] else ""
-)
+rows_html = []
+for _, row in df_filtree.iterrows():
+    statut = row["Statut"]
+    style = status_styles.get(statut, "")
+    rows_html.append(
+        f"<tr style='border-bottom: 1px solid rgba(148, 163, 184, 0.18);'>"
+        f"<td style='padding: 10px 12px;'>{row['ID']}</td>"
+        f"<td style='padding: 10px 12px;'>{row['Date/Heure']}</td>"
+        f"<td style='padding: 10px 12px;'>{row['Humidité (%)']}</td>"
+        f"<td style='padding: 10px 12px;'>{row['Température (°C)']}</td>"
+        f"<td style='padding: 10px 12px;'>{row['CO2 (ppm)']}</td>"
+        f"<td style='padding: 10px 12px;'>{row['O2 (%vol)']}</td>"
+        f"<td style='padding: 10px 12px; {style} font-weight: 700; border-radius: 8px;'>{statut}</td>"
+        f"<td style='padding: 10px 12px;'>{row['Précision']}</td>"
+        "</tr>"
+    )
 
-st.dataframe(styled_df, use_container_width=True, height=400)
+html_table = f"""
+<style>
+    .responsive-historique-table {{
+        overflow-x: auto;
+        max-height: 430px;
+        padding-right: 10px;
+    }}
+    .responsive-historique-table table {{
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+        min-width: 850px;
+    }}
+    .responsive-historique-table th,
+    .responsive-historique-table td {{
+        padding: 12px 14px;
+        text-align: left;
+        white-space: nowrap;
+    }}
+
+    @media screen and (max-width: 900px) {{
+        .responsive-historique-table table {{
+            min-width: 700px;
+        }}
+        .responsive-historique-table th,
+        .responsive-historique-table td {{
+            padding: 10px 8px;
+            font-size: 13px;
+        }}
+    }}
+
+    @media screen and (max-width: 700px) {{
+        .responsive-historique-table table {{
+            min-width: 100%;
+        }}
+        .responsive-historique-table th,
+        .responsive-historique-table td {{
+            padding: 8px 6px;
+            font-size: 12px;
+        }}
+    }}
+</style>
+<div class='responsive-historique-table'>
+    <table>
+        <thead>
+            <tr style='background: rgba(15, 23, 42, 0.92); color: #e2e8f0;'>
+                <th>ID</th>
+                <th>Date/Heure</th>
+                <th>Humidité</th>
+                <th>Température</th>
+                <th>CO2</th>
+                <th>O2</th>
+                <th>Statut</th>
+                <th>Précision</th>
+            </tr>
+        </thead>
+        <tbody>
+            {''.join(rows_html)}
+        </tbody>
+    </table>
+</div>
+"""
+
+st.markdown(html_table, unsafe_allow_html=True)
 
 # Option de téléchargement
 col_dl1, col_dl2 = st.columns([1, 4])
