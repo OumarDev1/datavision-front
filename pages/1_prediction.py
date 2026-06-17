@@ -127,16 +127,20 @@ if btn_analyser:
                     score_ia = f"{score_val:.0f}%" if score_val is not None else str(score_raw)
 
                     # Enregistrer la prédiction en base SQLite
-                    save_prediction(
-                        humidite=val_humidite,
-                        temperature=val_temperature,
-                        co2=int(val_co2),
-                        o2=val_o2,
-                        statut=statut_ia,
-                        precision=None,
-                        score=score_val,
-                        message=alerte_txt,
-                    )
+                    try:
+                        save_prediction(
+                            humidite=val_humidite,
+                            temperature=val_temperature,
+                            co2=int(val_co2),
+                            o2=val_o2,
+                            statut=statut_ia,
+                            precision=None,
+                            score=score_val,
+                            message=alerte_txt,
+                        )
+                        st.success("✅ Prédiction enregistrée dans l'historique")
+                    except Exception as e:
+                        st.error(f"⚠️ Erreur lors de l'enregistrement : {e}")
             else:
                 st.error("Erreur de communication avec l'API")
     except Exception as e:
