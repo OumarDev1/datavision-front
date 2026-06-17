@@ -29,6 +29,7 @@ except ImportError:
 st.set_page_config(page_title="Historique", layout="wide")
 apply_global_styles()
 render_header("📋 Détail des Prédictions", "Historique de vos prédictions")
+
 # Récupérer les prédictions et préparer l'export CSV
 df = get_predictions()
 csv_export = df.to_csv(index=False).encode("utf-8") if not df.empty else b""
@@ -64,8 +65,6 @@ if st.session_state.get("confirm_delete"):
         if st.button("Annuler"):
             st.session_state["confirm_delete"] = False
 
-# df already chargé plus haut
-
 if df.empty:
     st.info(
         "Aucune prédiction enregistrée pour le moment. "
@@ -81,19 +80,14 @@ else:
         "co2": "CO2",
         "o2": "O2",
         "statut": "Statut",
-        "precision": "Précision",
-        "score": "Score (%)",
         "message": "Commentaire",
     })
+    
+    colonnes_a_garder = ["ID", "Date/Heure", "Humidité", "Température", "CO2", "O2", "Statut", "Commentaire"]
+    colonnes_existantes = [col for col in colonnes_a_garder if col in affichage.columns]
+    affichage = affichage[colonnes_existantes]
+
     affichage["ID"] = affichage["ID"].apply(lambda x: f"#{x:07d}")
-    if "Précision" in affichage.columns:
-        affichage["Précision"] = affichage["Précision"].apply(
-            lambda x: f"{x * 100:.0f}%" if pd.notna(x) else "-"
-        )
-    if "Score (%)" in affichage.columns:
-        affichage["Score (%)"] = affichage["Score (%)"].apply(
-            lambda x: f"{x:.0f}%" if pd.notna(x) else "-"
-        )
 
     # --- Couleur du statut ---
     def colorer_statut(val):
@@ -106,17 +100,8 @@ else:
             return "background-color:#fee2e2; color:#b91c1c;"
         return ""
 
-    # .map nécessite pandas >= 2.1 ; pour une version plus ancienne,
-    # remplace .map par .applymap.
     styled = affichage.style.map(colorer_statut, subset=["Statut"])
     st.dataframe(styled, use_container_width=True, hide_index=True)
-
-    # --- Statistiques rapides ---
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Total prédictions", len(df))
-    col2.metric("Cas critiques",
-                int((df["statut"].str.lower().isin(["critique", "élevé", "eleve"])).sum()))
-    col3.metric("Dernière prédiction", df["date_heure"].iloc[0])
 
     # --- Téléchargement CSV (CU06) ---
     csv = df.to_csv(index=False).encode("utf-8")

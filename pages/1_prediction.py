@@ -1,5 +1,6 @@
 import os
 import sys
+import importlib
 import importlib.util
 
 import streamlit as st
@@ -14,6 +15,8 @@ if root_dir not in sys.path:
 
 try:
     from utils import apply_global_styles, render_header, render_alert_box, render_warning_alert, render_critical_alert, render_footer
+    import database
+    importlib.reload(database)
     from database import save_prediction
 except ImportError:
     utils_path = os.path.join(root_dir, "utils.py")
