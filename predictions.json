@@ -20,5 +20,16 @@
     "Statut": "Critique",
     "Précision": "2.0%",
     "Message": "Alerte : Risque élevé"
+  },
+  {
+    "ID": "#20260617152623",
+    "Date/Heure": "2026-06-17 15:26:23",
+    "Humidité (%)": 51.0,
+    "Température (°C)": 35.0,
+    "CO2 (ppm)": 1301,
+    "O2 (%vol)": 21.14,
+    "Statut": "Critique",
+    "Précision": "2.0%",
+    "Message": "Alerte : Risque élevé"
   }
 ]

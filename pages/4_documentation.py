@@ -1,5 +1,25 @@
+import os
+import sys
+
 import streamlit as st
-from utils import apply_global_styles, render_header, render_card, render_footer
+
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if root_dir not in sys.path:
+    sys.path.insert(0, root_dir)
+
+try:
+    from utils import apply_global_styles, render_header, render_card, render_footer
+except ImportError:
+    import importlib.util
+    utils_path = os.path.join(root_dir, "utils.py")
+    spec = importlib.util.spec_from_file_location("utils", utils_path)
+    utils = importlib.util.module_from_spec(spec)
+    sys.modules["utils"] = utils
+    spec.loader.exec_module(utils)
+    apply_global_styles = utils.apply_global_styles
+    render_header = utils.render_header
+    render_card = utils.render_card
+    render_footer = utils.render_footer
 
 # Configuration
 if __name__ == "__main__":

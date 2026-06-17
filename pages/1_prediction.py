@@ -1,9 +1,32 @@
+import os
+import sys
+import importlib.util
+
 import streamlit as st
 import requests
 import random
 import pandas as pd
 from datetime import datetime, timedelta
-from utils import apply_global_styles, render_header, render_alert_box, render_warning_alert, render_critical_alert, render_footer, save_prediction
+
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if root_dir not in sys.path:
+    sys.path.insert(0, root_dir)
+
+try:
+    from utils import apply_global_styles, render_header, render_alert_box, render_warning_alert, render_critical_alert, render_footer, save_prediction
+except ImportError:
+    utils_path = os.path.join(root_dir, "utils.py")
+    spec = importlib.util.spec_from_file_location("utils", utils_path)
+    utils = importlib.util.module_from_spec(spec)
+    sys.modules["utils"] = utils
+    spec.loader.exec_module(utils)
+    apply_global_styles = utils.apply_global_styles
+    render_header = utils.render_header
+    render_alert_box = utils.render_alert_box
+    render_warning_alert = utils.render_warning_alert
+    render_critical_alert = utils.render_critical_alert
+    render_footer = utils.render_footer
+    save_prediction = utils.save_prediction
 # Configuration
 if __name__ == "__main__":
     st.set_page_config(page_title="Prédictions - DataVision", layout="wide")

@@ -3,11 +3,28 @@ Page Historique : affiche les prédictions réellement faites par l'utilisateur,
 lues depuis la base SQLite (database.get_predictions), avec un code couleur
 sur le statut et un téléchargement CSV (CU06).
 """
+import os
+import sys
+
 import streamlit as st
 import pandas as pd
 
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+if root_dir not in sys.path:
+    sys.path.insert(0, root_dir)
+
 from database import get_predictions
-from utils import apply_global_styles, render_header
+try:
+    from utils import apply_global_styles, render_header
+except ImportError:
+    import importlib.util
+    utils_path = os.path.join(root_dir, "utils.py")
+    spec = importlib.util.spec_from_file_location("utils", utils_path)
+    utils = importlib.util.module_from_spec(spec)
+    sys.modules["utils"] = utils
+    spec.loader.exec_module(utils)
+    apply_global_styles = utils.apply_global_styles
+    render_header = utils.render_header
 
 st.set_page_config(page_title="Historique", layout="wide")
 apply_global_styles()
