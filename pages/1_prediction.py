@@ -13,7 +13,8 @@ if root_dir not in sys.path:
     sys.path.insert(0, root_dir)
 
 try:
-    from utils import apply_global_styles, render_header, render_alert_box, render_warning_alert, render_critical_alert, render_footer, save_prediction
+    from utils import apply_global_styles, render_header, render_alert_box, render_warning_alert, render_critical_alert, render_footer
+    from database import save_prediction
 except ImportError:
     utils_path = os.path.join(root_dir, "utils.py")
     spec = importlib.util.spec_from_file_location("utils", utils_path)
@@ -26,7 +27,7 @@ except ImportError:
     render_warning_alert = utils.render_warning_alert
     render_critical_alert = utils.render_critical_alert
     render_footer = utils.render_footer
-    save_prediction = utils.save_prediction
+    from database import save_prediction
 # Configuration
 if __name__ == "__main__":
     st.set_page_config(page_title="Prédictions - DataVision", layout="wide")
@@ -110,18 +111,31 @@ if btn_analyser:
                     st.error(f"⚠️ Erreur : {api_result['message']}")
                 else:
                     statut_ia = api_result["statut_environnement"]
-                    score_ia = str(api_result["score_prediction"])
-                    alerte_txt = api_result["alerte_message"]
-                    
-                    # Enregistrer la prédiction
+                    score_raw = api_result.get("score_prediction")
+                    alerte_txt = api_result.get("alerte_message", "")
+
+                    try:
+                        score_val = float(score_raw)
+                    except (TypeError, ValueError):
+                        score_val = None
+                        if isinstance(score_raw, str) and score_raw.strip().endswith("%"):
+                            try:
+                                score_val = float(score_raw.strip().replace("%", ""))
+                            except ValueError:
+                                score_val = None
+
+                    score_ia = f"{score_val:.0f}%" if score_val is not None else str(score_raw)
+
+                    # Enregistrer la prédiction en base SQLite
                     save_prediction(
                         humidite=val_humidite,
                         temperature=val_temperature,
                         co2=int(val_co2),
                         o2=val_o2,
                         statut=statut_ia,
-                        score=f"{score_ia}%",
-                        message=alerte_txt
+                        precision=None,
+                        score=score_val,
+                        message=alerte_txt,
                     )
             else:
                 st.error("Erreur de communication avec l'API")

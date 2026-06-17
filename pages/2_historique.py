@@ -13,7 +13,7 @@ root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 if root_dir not in sys.path:
     sys.path.insert(0, root_dir)
 
-from database import get_predictions
+from database import get_predictions, vider_historique
 try:
     from utils import apply_global_styles, render_header
 except ImportError:
@@ -29,8 +29,42 @@ except ImportError:
 st.set_page_config(page_title="Historique", layout="wide")
 apply_global_styles()
 render_header("📋 Détail des Prédictions", "Historique de vos prédictions")
-
+# Récupérer les prédictions et préparer l'export CSV
 df = get_predictions()
+csv_export = df.to_csv(index=False).encode("utf-8") if not df.empty else b""
+
+# Confirmation suppression
+if "confirm_delete" not in st.session_state:
+    st.session_state["confirm_delete"] = False
+
+col_main, col_action = st.columns([7, 2])
+with col_action:
+    if st.download_button(
+        "📥 Exporter",
+        data=csv_export,
+        file_name="historique_predictions.csv",
+        mime="text/csv",
+        key="export_csv"
+    ):
+        pass
+
+    if st.button("🗑️ Effacer l'historique"):
+        st.session_state["confirm_delete"] = True
+
+if st.session_state.get("confirm_delete"):
+    st.warning("Vous êtes sur le point de supprimer définitivement tout l'historique.")
+    col_yes, col_no = st.columns([1, 1])
+    with col_yes:
+        if st.button("Confirmer la suppression"):
+            vider_historique()
+            st.session_state["confirm_delete"] = False
+            st.success("Historique effacé.")
+            st.experimental_rerun()
+    with col_no:
+        if st.button("Annuler"):
+            st.session_state["confirm_delete"] = False
+
+# df already chargé plus haut
 
 if df.empty:
     st.info(
@@ -48,11 +82,18 @@ else:
         "o2": "O2",
         "statut": "Statut",
         "precision": "Précision",
+        "score": "Score (%)",
+        "message": "Commentaire",
     })
     affichage["ID"] = affichage["ID"].apply(lambda x: f"#{x:07d}")
-    affichage["Précision"] = affichage["Précision"].apply(
-        lambda x: f"{x * 100:.0f}%" if pd.notna(x) else "-"
-    )
+    if "Précision" in affichage.columns:
+        affichage["Précision"] = affichage["Précision"].apply(
+            lambda x: f"{x * 100:.0f}%" if pd.notna(x) else "-"
+        )
+    if "Score (%)" in affichage.columns:
+        affichage["Score (%)"] = affichage["Score (%)"].apply(
+            lambda x: f"{x:.0f}%" if pd.notna(x) else "-"
+        )
 
     # --- Couleur du statut ---
     def colorer_statut(val):

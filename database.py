@@ -14,7 +14,8 @@ DB_PATH = "predictions.db"
 def init_db():
     """Crée la table des prédictions si elle n'existe pas encore."""
     conn = sqlite3.connect(DB_PATH)
-    conn.execute(
+    cursor = conn.cursor()
+    cursor.execute(
         """
         CREATE TABLE IF NOT EXISTS predictions (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -24,30 +25,40 @@ def init_db():
             co2         REAL    NOT NULL,
             o2          REAL    NOT NULL,
             statut      TEXT    NOT NULL,
-            precision   REAL
+            precision   REAL,
+            score       REAL,
+            message     TEXT
         )
         """
     )
+
+    existing_columns = [row[1] for row in cursor.execute("PRAGMA table_info(predictions)").fetchall()]
+    if "score" not in existing_columns:
+        cursor.execute("ALTER TABLE predictions ADD COLUMN score REAL")
+    if "message" not in existing_columns:
+        cursor.execute("ALTER TABLE predictions ADD COLUMN message TEXT")
+
     conn.commit()
     conn.close()
 
 
-def save_prediction(humidite, temperature, co2, o2, statut, precision=None):
+def save_prediction(humidite, temperature, co2, o2, statut, precision=None, score=None, message=None):
     """
-    Enregistre une prédiction.
-    - statut    : la classe prédite ("Optimal" / "Avertissement" / "Critique"
-                  ou "Faible" / "Modéré" / "Élevé")
-    - precision : confiance du modèle entre 0 et 1 (ex. 0.924)
+    Enregistre une prédiction dans la base SQLite.
+    - statut    : classe prédite ou libellé d’alerte
+    - precision : confiance du modèle entre 0 et 1
+    - score     : score de prédiction en pourcentage
+    - message   : texte d'alerte ou commentaire détaillé
     """
     init_db()
     conn = sqlite3.connect(DB_PATH)
     conn.execute(
         "INSERT INTO predictions "
-        "(date_heure, humidite, temperature, co2, o2, statut, precision) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?)",
+        "(date_heure, humidite, temperature, co2, o2, statut, precision, score, message) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
             datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            humidite, temperature, co2, o2, statut, precision,
+            humidite, temperature, co2, o2, statut, precision, score, message,
         ),
     )
     conn.commit()
