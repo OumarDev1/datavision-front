@@ -3,8 +3,7 @@ import requests
 import random
 import pandas as pd
 from datetime import datetime, timedelta
-from utils import apply_global_styles, render_header, render_alert_box, render_warning_alert, render_critical_alert, render_footer
-
+from utils import apply_global_styles, render_header, render_alert_box, render_warning_alert, render_critical_alert, render_footer, save_prediction
 # Configuration
 if __name__ == "__main__":
     st.set_page_config(page_title="Prédictions - DataVision", layout="wide")
@@ -90,6 +89,17 @@ if btn_analyser:
                     statut_ia = api_result["statut_environnement"]
                     score_ia = str(api_result["score_prediction"])
                     alerte_txt = api_result["alerte_message"]
+                    
+                    # Enregistrer la prédiction
+                    save_prediction(
+                        humidite=val_humidite,
+                        temperature=val_temperature,
+                        co2=int(val_co2),
+                        o2=val_o2,
+                        statut=statut_ia,
+                        score=f"{score_ia}%",
+                        message=alerte_txt
+                    )
             else:
                 st.error("Erreur de communication avec l'API")
     except Exception as e:

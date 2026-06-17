@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import random
 from datetime import datetime, timedelta
-from utils import apply_global_styles, render_header, render_card, render_footer
+from utils import apply_global_styles, render_header, render_card, render_footer, load_predictions
 
 # Configuration
 if __name__ == "__main__":
@@ -27,28 +27,34 @@ with col_filter3:
     statut_filter = st.selectbox("Filtrer par statut", ["Tous", "Optimal", "Avertissement", "Critique"])
 
 # --- GÉNÉRER DES DONNÉES D'EXEMPLE ---
-# Créer un historique d'exemple
+# Charger les prédictions sauvegardées
 @st.cache_data
-def generate_sample_data():
-    data = []
-    statuts = ["Optimal", "Avertissement", "Critique", "Optimal", "Optimal", "Avertissement"]
+def load_history_data():
+    saved_predictions = load_predictions()
     
-    for i in range(50):
-        date = datetime.now() - timedelta(days=random.randint(0, 30))
-        data.append({
-            "ID": f"#2026050{i:03d}",
-            "Date/Heure": date.strftime("%Y-%m-%d %H:%M:%S"),
-            "Humidité (%)": round(random.uniform(20, 80), 1),
-            "Température (°C)": round(random.uniform(15, 30), 1),
-            "CO2 (ppm)": random.randint(300, 2000),
-            "O2 (%vol)": round(random.uniform(18, 21), 1),
-            "Statut": random.choice(statuts),
-            "Précision": f"{random.randint(85, 99)}%"
-        })
+    # Si aucune prédiction sauvegardée, générer des données d'exemple
+    if not saved_predictions:
+        data = []
+        statuts = ["Optimal", "Avertissement", "Critique", "Optimal", "Optimal", "Avertissement"]
+        
+        for i in range(50):
+            date = datetime.now() - timedelta(days=random.randint(0, 30))
+            data.append({
+                "ID": f"#2026050{i:03d}",
+                "Date/Heure": date.strftime("%Y-%m-%d %H:%M:%S"),
+                "Humidité (%)": round(random.uniform(20, 80), 1),
+                "Température (°C)": round(random.uniform(15, 30), 1),
+                "CO2 (ppm)": random.randint(300, 2000),
+                "O2 (%vol)": round(random.uniform(18, 21), 1),
+                "Statut": random.choice(statuts),
+                "Précision": f"{random.randint(85, 99)}%"
+            })
+        
+        return pd.DataFrame(data)
     
-    return pd.DataFrame(data)
+    return pd.DataFrame(saved_predictions)
 
-df_historique = generate_sample_data()
+df_historique = load_history_data()
 
 # Filtrer les données
 if statut_filter != "Tous":

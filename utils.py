@@ -1,4 +1,7 @@
 import streamlit as st
+import json
+import os
+from datetime import datetime
 
 def apply_global_styles():
     """Applique les styles CSS globaux à toutes les pages"""
@@ -303,3 +306,58 @@ def render_footer():
             </p>
         </div>
     """, unsafe_allow_html=True)
+
+# ===== FONCTIONS DE PERSISTANCE DES PRÉDICTIONS =====
+
+def save_prediction(humidite: float, temperature: float, co2: int, o2: float, 
+                    statut: str, score: str, message: str):
+    """Enregistre une prédiction dans le fichier JSON"""
+    predictions_file = "predictions.json"
+    
+    # Charger les données existantes
+    predictions = []
+    if os.path.exists(predictions_file):
+        try:
+            with open(predictions_file, "r", encoding="utf-8") as f:
+                predictions = json.load(f)
+        except:
+            predictions = []
+    
+    # Créer la nouvelle prédiction
+    new_prediction = {
+        "ID": f"#{datetime.now().strftime('%Y%m%d%H%M%S')}",
+        "Date/Heure": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "Humidité (%)": humidite,
+        "Température (°C)": temperature,
+        "CO2 (ppm)": co2,
+        "O2 (%vol)": o2,
+        "Statut": statut,
+        "Précision": score,
+        "Message": message
+    }
+    
+    # Ajouter la nouvelle prédiction
+    predictions.append(new_prediction)
+    
+    # Sauvegarder
+    with open(predictions_file, "w", encoding="utf-8") as f:
+        json.dump(predictions, f, ensure_ascii=False, indent=2)
+
+def load_predictions():
+    """Charge toutes les prédictions sauvegardées"""
+    predictions_file = "predictions.json"
+    
+    if not os.path.exists(predictions_file):
+        return []
+    
+    try:
+        with open(predictions_file, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except:
+        return []
+
+def clear_predictions():
+    """Efface toutes les prédictions sauvegardées"""
+    predictions_file = "predictions.json"
+    if os.path.exists(predictions_file):
+        os.remove(predictions_file)
