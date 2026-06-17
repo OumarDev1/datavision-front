@@ -1,300 +1,70 @@
+"""
+Page Historique : affiche les prédictions réellement faites par l'utilisateur,
+lues depuis la base SQLite (database.get_predictions), avec un code couleur
+sur le statut et un téléchargement CSV (CU06).
+"""
 import streamlit as st
 import pandas as pd
-import random
-from datetime import datetime, timedelta
-from utils import apply_global_styles, render_header, render_card, render_footer, load_predictions
 
-# Configuration
-if __name__ == "__main__":
-    st.set_page_config(page_title="Historique - DataVision", layout="wide")
+from database import get_predictions
+from utils import apply_global_styles, render_header
+
+st.set_page_config(page_title="Historique", layout="wide")
 apply_global_styles()
+render_header("📋 Détail des Prédictions", "Historique de vos prédictions")
 
-# Header
-render_header("📊 Historique des Prédictions", "Consultez et analysez l'historique de vos prédictions")
+df = get_predictions()
 
-# --- CONTRÔLES ---
-st.subheader("🔍 Filtres et Options")
-
-col_filter1, col_filter2, col_filter3 = st.columns(3)
-
-with col_filter1:
-    date_from = st.date_input("Date de début", value=datetime.now() - timedelta(days=30))
-
-with col_filter2:
-    date_to = st.date_input("Date de fin", value=datetime.now())
-
-with col_filter3:
-    statut_filter = st.selectbox("Filtrer par statut", ["Tous", "Optimal", "Avertissement", "Critique"])
-
-# --- GÉNÉRER DES DONNÉES D'EXEMPLE ---
-# Charger les prédictions sauvegardées
-@st.cache_data
-def load_history_data():
-    saved_predictions = load_predictions()
-    
-    # Si aucune prédiction sauvegardée, générer des données d'exemple
-    if not saved_predictions:
-        data = []
-        statuts = ["Optimal", "Avertissement", "Critique", "Optimal", "Optimal", "Avertissement"]
-        
-        for i in range(50):
-            date = datetime.now() - timedelta(days=random.randint(0, 30))
-            data.append({
-                "ID": f"#2026050{i:03d}",
-                "Date/Heure": date.strftime("%Y-%m-%d %H:%M:%S"),
-                "Humidité (%)": round(random.uniform(20, 80), 1),
-                "Température (°C)": round(random.uniform(15, 30), 1),
-                "CO2 (ppm)": random.randint(300, 2000),
-                "O2 (%vol)": round(random.uniform(18, 21), 1),
-                "Statut": random.choice(statuts),
-                "Précision": f"{random.randint(85, 99)}%"
-            })
-        
-        return pd.DataFrame(data)
-    
-    return pd.DataFrame(saved_predictions)
-
-df_historique = load_history_data()
-
-# Filtrer les données
-if statut_filter != "Tous":
-    df_filtree = df_historique[df_historique["Statut"] == statut_filter]
+if df.empty:
+    st.info(
+        "Aucune prédiction enregistrée pour le moment. "
+        "Rendez-vous dans le menu Prédiction pour en effectuer une."
+    )
 else:
-    df_filtree = df_historique.copy()
-
-# --- STATISTIQUES GÉNÉRALES ---
-st.subheader("📈 Statistiques Globales")
-
-col_stat1, col_stat2, col_stat3, col_stat4 = st.columns(4)
-
-with col_stat1:
-    st.metric(
-        label="📊 Total Analyses",
-        value=len(df_filtree),
-        delta=f"Filtrées : {len(df_filtree)}/{len(df_historique)}"
+    # --- Préparer l'affichage ---
+    affichage = df.rename(columns={
+        "id": "ID",
+        "date_heure": "Date/Heure",
+        "humidite": "Humidité",
+        "temperature": "Température",
+        "co2": "CO2",
+        "o2": "O2",
+        "statut": "Statut",
+        "precision": "Précision",
+    })
+    affichage["ID"] = affichage["ID"].apply(lambda x: f"#{x:07d}")
+    affichage["Précision"] = affichage["Précision"].apply(
+        lambda x: f"{x * 100:.0f}%" if pd.notna(x) else "-"
     )
 
-with col_stat2:
-    optimal_count = len(df_filtree[df_filtree["Statut"] == "Optimal"])
-    st.metric(
-        label="✅ Optimal",
-        value=optimal_count,
-        delta=f"{(optimal_count/len(df_filtree)*100):.1f}%" if len(df_filtree) > 0 else "N/A"
-    )
+    # --- Couleur du statut ---
+    def colorer_statut(val):
+        v = str(val).lower()
+        if v in ("optimal", "faible"):
+            return "background-color:#dcfce7; color:#15803d;"
+        if v in ("avertissement", "modéré", "modere"):
+            return "background-color:#fef9c3; color:#a16207;"
+        if v in ("critique", "élevé", "eleve"):
+            return "background-color:#fee2e2; color:#b91c1c;"
+        return ""
 
-with col_stat3:
-    warning_count = len(df_filtree[df_filtree["Statut"] == "Avertissement"])
-    st.metric(
-        label="⚠️ Avertissement",
-        value=warning_count,
-        delta=f"{(warning_count/len(df_filtree)*100):.1f}%" if len(df_filtree) > 0 else "N/A"
-    )
+    # .map nécessite pandas >= 2.1 ; pour une version plus ancienne,
+    # remplace .map par .applymap.
+    styled = affichage.style.map(colorer_statut, subset=["Statut"])
+    st.dataframe(styled, use_container_width=True, hide_index=True)
 
-with col_stat4:
-    critical_count = len(df_filtree[df_filtree["Statut"] == "Critique"])
-    st.metric(
-        label="🚨 Critique",
-        value=critical_count,
-        delta=f"{(critical_count/len(df_filtree)*100):.1f}%" if len(df_filtree) > 0 else "N/A"
-    )
+    # --- Statistiques rapides ---
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Total prédictions", len(df))
+    col2.metric("Cas critiques",
+                int((df["statut"].str.lower().isin(["critique", "élevé", "eleve"])).sum()))
+    col3.metric("Dernière prédiction", df["date_heure"].iloc[0])
 
-st.markdown("<br>", unsafe_allow_html=True)
-
-# --- TABLEAU HISTORIQUE ---
-st.subheader("📋 Détail des Prédictions")
-
-status_styles = {
-    "Optimal": "background-color: rgba(16, 185, 129, 0.14); color: #10b981;",
-    "Avertissement": "background-color: rgba(245, 158, 11, 0.14); color: #f59e0b;",
-    "Critique": "background-color: rgba(239, 68, 68, 0.16); color: #ef4444;"
-}
-
-rows_html = []
-for _, row in df_filtree.iterrows():
-    statut = row["Statut"]
-    style = status_styles.get(statut, "")
-    rows_html.append(
-        f"<tr style='border-bottom: 1px solid rgba(148, 163, 184, 0.18);'>"
-        f"<td style='padding: 10px 12px;'>{row['ID']}</td>"
-        f"<td style='padding: 10px 12px;'>{row['Date/Heure']}</td>"
-        f"<td style='padding: 10px 12px;'>{row['Humidité (%)']}</td>"
-        f"<td style='padding: 10px 12px;'>{row['Température (°C)']}</td>"
-        f"<td style='padding: 10px 12px;'>{row['CO2 (ppm)']}</td>"
-        f"<td style='padding: 10px 12px;'>{row['O2 (%vol)']}</td>"
-        f"<td style='padding: 10px 12px; {style} font-weight: 700; border-radius: 8px;'>{statut}</td>"
-        f"<td style='padding: 10px 12px;'>{row['Précision']}</td>"
-        "</tr>"
-    )
-
-html_table = f"""
-<style>
-    .responsive-historique-table {{
-        overflow-x: auto;
-        max-height: 430px;
-        padding-right: 10px;
-    }}
-    .responsive-historique-table table {{
-        width: 100%;
-        border-collapse: collapse;
-        font-size: 14px;
-        min-width: 850px;
-    }}
-    .responsive-historique-table th,
-    .responsive-historique-table td {{
-        padding: 12px 14px;
-        text-align: left;
-        white-space: nowrap;
-    }}
-
-    @media screen and (max-width: 900px) {{
-        .responsive-historique-table table {{
-            min-width: 700px;
-        }}
-        .responsive-historique-table th,
-        .responsive-historique-table td {{
-            padding: 10px 8px;
-            font-size: 13px;
-        }}
-    }}
-
-    @media screen and (max-width: 700px) {{
-        .responsive-historique-table table {{
-            min-width: 100%;
-        }}
-        .responsive-historique-table th,
-        .responsive-historique-table td {{
-            padding: 8px 6px;
-            font-size: 12px;
-        }}
-    }}
-</style>
-<div class='responsive-historique-table'>
-    <table>
-        <thead>
-            <tr style='background: rgba(15, 23, 42, 0.92); color: #e2e8f0;'>
-                <th>ID</th>
-                <th>Date/Heure</th>
-                <th>Humidité</th>
-                <th>Température</th>
-                <th>CO2</th>
-                <th>O2</th>
-                <th>Statut</th>
-                <th>Précision</th>
-            </tr>
-        </thead>
-        <tbody>
-            {''.join(rows_html)}
-        </tbody>
-    </table>
-</div>
-"""
-
-st.markdown(html_table, unsafe_allow_html=True)
-
-# Option de téléchargement
-col_dl1, col_dl2 = st.columns([1, 4])
-
-with col_dl1:
-    csv = df_filtree.to_csv(index=False)
+    # --- Téléchargement CSV (CU06) ---
+    csv = df.to_csv(index=False).encode("utf-8")
     st.download_button(
-        label="📥 Télécharger CSV",
+        "📥 Télécharger CSV",
         data=csv,
-        file_name=f"datavision_historique_{datetime.now().strftime('%Y%m%d')}.csv",
-        mime="text/csv"
+        file_name="historique_predictions.csv",
+        mime="text/csv",
     )
-
-st.markdown("<br><hr>", unsafe_allow_html=True)
-
-# --- GRAPHIQUES STATISTIQUES ---
-st.subheader("📊 Tendances et Analyses")
-
-col_chart1, col_chart2 = st.columns(2)
-
-with col_chart1:
-    st.markdown("<h4 style='color: #3b82f6;'>Distribution des Statuts</h4>", unsafe_allow_html=True)
-    statut_counts = df_filtree["Statut"].value_counts()
-    st.bar_chart(statut_counts)
-
-with col_chart2:
-    st.markdown("<h4 style='color: #3b82f6;'>Moyenne Humidité par Jour</h4>", unsafe_allow_html=True)
-    humidite_par_jour = df_filtree.groupby(df_filtree["Date/Heure"].str[:10])["Humidité (%)"].mean()
-    st.line_chart(humidite_par_jour)
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-col_chart3, col_chart4 = st.columns(2)
-
-with col_chart3:
-    st.markdown("<h4 style='color: #3b82f6;'>Moyenne Température par Jour</h4>", unsafe_allow_html=True)
-    temp_par_jour = df_filtree.groupby(df_filtree["Date/Heure"].str[:10])["Température (°C)"].mean()
-    st.line_chart(temp_par_jour)
-
-with col_chart4:
-    st.markdown("<h4 style='color: #3b82f6;'>Distribution CO2</h4>", unsafe_allow_html=True)
-    st.bar_chart(df_filtree["CO2 (ppm)"].describe())
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-# --- INSIGHTS DÉTAILLÉS ---
-st.subheader("💡 Insights et Observations")
-
-col_insight1, col_insight2 = st.columns(2)
-
-with col_insight1:
-    avg_humidite = df_filtree["Humidité (%)"].mean()
-    render_card(
-        "💧 Humidité Moyenne",
-        f"La moyenne d'humidité est de <strong>{avg_humidite:.1f}%</strong>. "
-        f"{'Conditions optimales' if 30 <= avg_humidite <= 70 else 'À surveiller'}"
-    )
-
-with col_insight2:
-    avg_temp = df_filtree["Température (°C)"].mean()
-    render_card(
-        "🌡️ Température Moyenne",
-        f"La température moyenne est de <strong>{avg_temp:.1f}°C</strong>. "
-        f"{'Confortable' if 20 <= avg_temp <= 26 else 'À réguler'}"
-    )
-
-col_insight3, col_insight4 = st.columns(2)
-
-with col_insight3:
-    avg_co2 = df_filtree["CO2 (ppm)"].mean()
-    render_card(
-        "💨 CO2 Moyen",
-        f"La concentration CO2 moyenne est de <strong>{avg_co2:.0f} ppm</strong>. "
-        f"{'Normal' if avg_co2 <= 1000 else 'Élevé'}"
-    )
-
-with col_insight4:
-    avg_o2 = df_filtree["O2 (%vol)"].mean()
-    render_card(
-        "🫁 Oxygène Moyen",
-        f"La concentration O2 moyenne est de <strong>{avg_o2:.1f}%</strong>. "
-        f"{'Optimal' if avg_o2 >= 19.5 else 'Bas'}"
-    )
-
-st.markdown("<br>", unsafe_allow_html=True)
-
-# --- TABLEAUX RÉCAPITULATIFS ---
-st.subheader("📋 Récapitulatifs par Paramètre")
-
-tab1, tab2, tab3, tab4 = st.tabs(["Humidité", "Température", "CO2", "O2"])
-
-with tab1:
-    hum_stats = df_filtree["Humidité (%)"].describe()
-    st.dataframe(hum_stats.to_frame().T)
-
-with tab2:
-    temp_stats = df_filtree["Température (°C)"].describe()
-    st.dataframe(temp_stats.to_frame().T)
-
-with tab3:
-    co2_stats = df_filtree["CO2 (ppm)"].describe()
-    st.dataframe(co2_stats.to_frame().T)
-
-with tab4:
-    o2_stats = df_filtree["O2 (%vol)"].describe()
-    st.dataframe(o2_stats.to_frame().T)
-
-render_footer()
